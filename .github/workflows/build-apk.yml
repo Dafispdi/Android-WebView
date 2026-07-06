@@ -22,34 +22,38 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # INI KUNCINYA: Paksa GitHub pakai Gradle 8.2 dari awal, biarin bawaan servernya!
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: '8.2'
+          cache-disabled: true
 
       - name: Inject Target URL & App Name
         run: |
           sed -i "s/APP_NAME_PLACEHOLDER/${{ github.event.client_payload.app_name }}/g" app/src/main/res/values/strings.xml
           sed -i "s|TARGET_URL_PLACEHOLDER|${{ github.event.client_payload.target_url }}|g" app/src/main/java/com/web2app/builder/MainActivity.kt
 
-      - name: Download & Set Logo
+      - name: Download & Fix Logo
         run: |
+          # Install tool konversi gambar
+          sudo apt-get update && sudo apt-get install -y imagemagick
           mkdir -p app/src/main/res/mipmap-xxxhdpi app/src/main/res/mipmap-xxhdpi app/src/main/res/mipmap-xhdpi app/src/main/res/mipmap-hdpi
-          curl -L "${{ github.event.client_payload.logo_url }}" -o app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
-          curl -L "${{ github.event.client_payload.logo_url }}" -o app/src/main/res/mipmap-xxhdpi/ic_launcher.png
-          curl -L "${{ github.event.client_payload.logo_url }}" -o app/src/main/res/mipmap-xhdpi/ic_launcher.png
-          curl -L "${{ github.event.client_payload.logo_url }}" -o app/src/main/res/mipmap-hdpi/ic_launcher.png
+          
+          # Download gambar ke file sementara
+          curl -L "${{ github.event.client_payload.logo_url }}" -o temp_logo
+          
+          # Paksa konversi ke PNG standar Android (mengatasi AAPT error file failed to compile)
+          convert temp_logo -background none -resize 192x192 -gravity center -extent 192x192 PNG32:app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+          convert temp_logo -background none -resize 144x144 -gravity center -extent 144x144 PNG32:app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+          convert temp_logo -background none -resize 96x96 -gravity center -extent 96x96 PNG32:app/src/main/res/mipmap-xhdpi/ic_launcher.png
+          convert temp_logo -background none -resize 72x72 -gravity center -extent 72x72 PNG32:app/src/main/res/mipmap-hdpi/ic_launcher.png
 
       - name: Build and Sign APK
         run: |
-          # Langsung compile, gak butuh gradlew lagi karena versi 8.2 udah terinstall murni!
           gradle assembleRelease --no-daemon
           
-          # Buat sertifikat dadakan biar APK valid di HP
           keytool -genkeypair -alias androiddebugkey -keypass android -keystore debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -keyalg RSA -keysize 2048 -validity 9125
           
-          # Sign APK
           $ANDROID_HOME/build-tools/34.0.0/apksigner sign --ks debug.keystore --ks-pass pass:android app/build/outputs/apk/release/app-release-unsigned.apk
           mv app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/app-release-signed.apk
 
