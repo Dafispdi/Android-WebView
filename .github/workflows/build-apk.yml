@@ -34,9 +34,10 @@ jobs:
           sed -i "s/APP_NAME_PLACEHOLDER/${{ github.event.client_payload.app_name }}/g" app/src/main/res/values/strings.xml
           sed -i "s|TARGET_URL_PLACEHOLDER|${{ github.event.client_payload.target_url }}|g" app/src/main/java/com/web2app/builder/MainActivity.kt
           
-          # 2. Inject Package Name Asli (Mencegah aplikasi tertimpa saat diinstall)
+          # 2. Inject Package Name Asli ke Gradle, Kotlin, dan Manifest (Anti Error)
           sed -i "s/com.web2app.builder/${{ github.event.client_payload.package_name }}/g" app/build.gradle.kts
           sed -i "s/com.web2app.builder/${{ github.event.client_payload.package_name }}/g" app/src/main/java/com/web2app/builder/MainActivity.kt
+          sed -i 's/<manifest /<manifest package="${{ github.event.client_payload.package_name }}" /g' app/src/main/AndroidManifest.xml
           
           # 3. Inject Fullscreen Mode
           if [ '${{ github.event.client_payload.is_fullscreen }}' == 'true' ]; then
