@@ -16,19 +16,24 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // --- 1. INJEKSI ONESIGNAL (PUSH NOTIFICATION) ---
+                // --- 1. INJEKSI ONESIGNAL (PUSH NOTIFICATION) ---
         val oneSignalAppId = "ONESIGNAL_PLACEHOLDER"
         if (oneSignalAppId != "ONESIGNAL_PLACEHOLDER" && oneSignalAppId.isNotEmpty()) {
+            // Aktifkan logging untuk debug (bisa dihapus nanti)
+            OneSignal.setLogLevel(OneSignal.LOG_LEVEL.VERBOSE, OneSignal.LOG_LEVEL.NONE)
+            
+            // Inisialisasi
             OneSignal.initWithContext(this)
             OneSignal.setAppId(oneSignalAppId)
-        }
-        
-        webView = WebView(this)
-        setContentView(webView)
-        
-        webView.settings.apply {
-            javaScriptEnabled = true
-            domStorageEnabled = true
+            
+            // Minta izin notifikasi (Wajib untuk Android 13 ke atas)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                androidx.core.app.ActivityCompat.requestPermissions(
+                    this, 
+                    arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 
+                    1
+                )
+            }
         }
         
         // --- 2. MODE OFFLINE (CUSTOM NO INTERNET PAGE) ---
