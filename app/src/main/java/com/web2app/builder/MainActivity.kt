@@ -7,10 +7,6 @@ import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import com.onesignal.OneSignal
-import android.Manifest
-import android.os.Build
-import androidx.core.app.ActivityCompat
 
 class MainActivity : Activity() {
     private lateinit var webView: WebView
@@ -29,19 +25,7 @@ class MainActivity : Activity() {
             allowFileAccess = true
         }
         
-        // 2. Injeksi OneSignal
-        val oneSignalAppId = "ONESIGNAL_PLACEHOLDER"
-        if (oneSignalAppId != "ONESIGNAL_PLACEHOLDER" && oneSignalAppId.isNotEmpty()) {
-            OneSignal.initWithContext(this)
-            OneSignal.setAppId(oneSignalAppId)
-            
-            // Minta izin notifikasi (Android 13+)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
-            }
-        }
-        
-        // 3. Setup WebViewClient
+        // 2. Setup WebViewClient (Menangani loading dan error)
         webView.webViewClient = object : WebViewClient() {
             override fun onReceivedError(
                 view: WebView?,
@@ -53,10 +37,10 @@ class MainActivity : Activity() {
                         <!DOCTYPE html>
                         <html>
                         <body style="background:#0a0a0c; color:#dcb8ff; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; text-align:center;">
-                            <div style="background:rgba(255,255,255,0.05); padding:20px; border-radius:15px;">
-                                <h2>Koneksi Terputus</h2>
-                                <p>Pastikan Anda terhubung ke internet.</p>
-                                <button onclick="window.location.reload()" style="padding:10px 20px; cursor:pointer;">Muat Ulang</button>
+                            <div style="background:rgba(255,255,255,0.05); padding:20px; border-radius:15px; border: 1px solid rgba(255,255,255,0.1);">
+                                <h2 style="color:#8a2be2; margin-bottom:10px;">Koneksi Terputus</h2>
+                                <p style="color:#cfc2d7; font-size:14px; margin-bottom:20px;">Pastikan Anda terhubung ke internet.</p>
+                                <button onclick="window.location.reload()" style="background: linear-gradient(135deg, #8A2BE2, #6A00FF); color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: bold; cursor: pointer;">Muat Ulang</button>
                             </div>
                         </body>
                         </html>
@@ -68,7 +52,7 @@ class MainActivity : Activity() {
         
         webView.webChromeClient = WebChromeClient()
         
-        // 4. Load URL
+        // 3. Load URL Target
         webView.loadUrl("TARGET_URL_PLACEHOLDER")
     }
 
