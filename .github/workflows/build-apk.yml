@@ -30,16 +30,24 @@ jobs:
 
       - name: Inject Configurations, Package Name & Features
         run: |
+          PKG_NAME="${{ github.event.client_payload.package_name }}"
+          if [ -z "$PKG_NAME" ] || [ "$PKG_NAME" == "null" ]; then
+            PKG_NAME="com.kyxzan.app"
+          fi
+          
           # 1. Inject App Name & URL
           sed -i "s/APP_NAME_PLACEHOLDER/${{ github.event.client_payload.app_name }}/g" app/src/main/res/values/strings.xml
           sed -i "s|TARGET_URL_PLACEHOLDER|${{ github.event.client_payload.target_url }}|g" app/src/main/java/com/web2app/builder/MainActivity.kt
           
-          # 2. Inject Package Name Asli ke Gradle, Kotlin, dan Manifest (Anti Error)
-          sed -i "s/com.web2app.builder/${{ github.event.client_payload.package_name }}/g" app/build.gradle.kts
-          sed -i "s/com.web2app.builder/${{ github.event.client_payload.package_name }}/g" app/src/main/java/com/web2app/builder/MainActivity.kt
-          sed -i 's/<manifest /<manifest package="${{ github.event.client_payload.package_name }}" /g' app/src/main/AndroidManifest.xml
+          # 2. Inject Package Name
+          sed -i "s/com.web2app.builder/$PKG_NAME/g" app/build.gradle.kts
+          sed -i "s/com.web2app.builder/$PKG_NAME/g" app/src/main/java/com/web2app/builder/MainActivity.kt
           
-          # 3. Inject Fullscreen Mode
+          # 3. Inject Version Code & Version Name
+          sed -i "s/versionCode = 1/versionCode = ${{ github.event.client_payload.version_code }}/g" app/build.gradle.kts
+          sed -i "s/versionName = \"1.0\"/versionName = \"${{ github.event.client_payload.version_name }}\"/g" app/build.gradle.kts
+          
+          # 4. Inject Fullscreen Mode
           if [ '${{ github.event.client_payload.is_fullscreen }}' == 'true' ]; then
             sed -i 's/Theme.NoTitleBar/Theme.NoTitleBar.Fullscreen/g' app/src/main/AndroidManifest.xml
           fi
