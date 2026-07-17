@@ -56,7 +56,7 @@ jobs:
           OS_ID="${{ github.event.client_payload.onesignal_id }}"
           if [ -n "$OS_ID" ] && [ "$OS_ID" != "null" ]; then
             # Suntik ID ke Kotlin
-            sed -i "s/ONESIGNAL_PLACEHOLDER/$OS_ID/g" app/src/main/java/com/web2app/builder/MainActivity.kt
+            sed -i "s/f598e317-3ea9-4ecf-998b-88bd7b032355/$OS_ID/g" app/src/main/java/com/web2app/builder/MainActivity.kt
             
             # Suntik Library OneSignal ke Gradle (Dibaris paling bawah dependencies)
             echo 'dependencies { implementation("com.onesignal:OneSignal:4.8.6") }' >> app/build.gradle.kts
