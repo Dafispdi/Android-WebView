@@ -51,19 +51,6 @@ jobs:
           if [ '${{ github.event.client_payload.is_fullscreen }}' == 'true' ]; then
             sed -i 's/Theme.NoTitleBar/Theme.NoTitleBar.Fullscreen/g' app/src/main/AndroidManifest.xml
           fi
-          
-          # 5. Inject OneSignal (Otomatis nambah library kalau ID diisi)
-          OS_ID="${{ github.event.client_payload.onesignal_id }}"
-          if [ -n "$OS_ID" ] && [ "$OS_ID" != "null" ]; then
-            # Suntik ID ke Kotlin
-            sed -i "s/f598e317-3ea9-4ecf-998b-88bd7b032355/$OS_ID/g" app/src/main/java/com/web2app/builder/MainActivity.kt
-            
-            # Suntik Library OneSignal ke Gradle (Dibaris paling bawah dependencies)
-            echo 'dependencies { implementation("com.onesignal:OneSignal:4.8.6") }' >> app/build.gradle.kts
-          else
-            # Kalau kosong, hapus baris import dan blok kode OneSignal biar gak error
-            sed -i '/import com.onesignal.OneSignal/d' app/src/main/java/com/web2app/builder/MainActivity.kt
-          fi
 
       - name: Download & Fix Logo
         run: |
