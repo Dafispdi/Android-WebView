@@ -7,8 +7,10 @@ import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
-// IMPORT ONESIGNAL (Akan diproses otomatis oleh GitHub Actions jika ada ID)
 import com.onesignal.OneSignal
+import android.Manifest
+import android.os.Build
+import androidx.core.app.ActivityCompat
 
 class MainActivity : Activity() {
     private lateinit var webView: WebView
@@ -16,62 +18,49 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-                // --- 1. INJEKSI ONESIGNAL (PUSH NOTIFICATION) ---
+        // 1. Inisialisasi WebView dulu dan pasang ke Layout
+        webView = WebView(this)
+        setContentView(webView)
+        
+        webView.settings.apply {
+            javaScriptEnabled = true
+            domStorageEnabled = true
+            allowContentAccess = true
+            allowFileAccess = true
+        }
+        
+        // 2. Injeksi OneSignal
         val oneSignalAppId = "ONESIGNAL_PLACEHOLDER"
         if (oneSignalAppId != "ONESIGNAL_PLACEHOLDER" && oneSignalAppId.isNotEmpty()) {
-            // Aktifkan logging untuk debug (bisa dihapus nanti)
-            OneSignal.setLogLevel(OneSignal.LOG_LEVEL.VERBOSE, OneSignal.LOG_LEVEL.NONE)
-            
-            // Inisialisasi
             OneSignal.initWithContext(this)
             OneSignal.setAppId(oneSignalAppId)
             
-            // Minta izin notifikasi (Wajib untuk Android 13 ke atas)
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                androidx.core.app.ActivityCompat.requestPermissions(
-                    this, 
-                    arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 
-                    1
-                )
+            // Minta izin notifikasi (Android 13+)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
             }
         }
         
-        // --- 2. MODE OFFLINE (CUSTOM NO INTERNET PAGE) ---
+        // 3. Setup WebViewClient
         webView.webViewClient = object : WebViewClient() {
             override fun onReceivedError(
                 view: WebView?,
                 request: WebResourceRequest?,
                 error: WebResourceError?
             ) {
-                super.onReceivedError(view, request, error)
-                
-                // Pastikan yang gagal adalah halaman utama, bukan cuma error load gambar
                 if (request?.isForMainFrame == true) {
-                    // Desain halaman offline keren ala Obsidian Forge
                     val offlineHtml = """
                         <!DOCTYPE html>
                         <html>
-                        <head>
-                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                            <style>
-                                body { background-color: #0a0a0c; color: #dcb8ff; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 90vh; font-family: sans-serif; text-align: center; padding: 20px; }
-                                .box { background: rgba(255,255,255,0.05); padding: 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); }
-                                h2 { margin-bottom: 10px; color: #8a2be2; }
-                                p { color: #cfc2d7; font-size: 14px; margin-bottom: 20px; }
-                                button { background: linear-gradient(135deg, #8A2BE2, #6A00FF); color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-                                button:active { transform: scale(0.95); }
-                            </style>
-                        </head>
-                        <body>
-                            <div class="box">
+                        <body style="background:#0a0a0c; color:#dcb8ff; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; text-align:center;">
+                            <div style="background:rgba(255,255,255,0.05); padding:20px; border-radius:15px;">
                                 <h2>Koneksi Terputus</h2>
-                                <p>Pastikan Anda terhubung ke internet<br>lalu coba lagi.</p>
-                                <button onclick="window.location.reload()">Muat Ulang Halaman</button>
+                                <p>Pastikan Anda terhubung ke internet.</p>
+                                <button onclick="window.location.reload()" style="padding:10px 20px; cursor:pointer;">Muat Ulang</button>
                             </div>
                         </body>
                         </html>
                     """.trimIndent()
-                    
                     view?.loadDataWithBaseURL(null, offlineHtml, "text/html", "UTF-8", null)
                 }
             }
@@ -79,7 +68,7 @@ class MainActivity : Activity() {
         
         webView.webChromeClient = WebChromeClient()
         
-        // --- 3. TARGET URL INJEKSI ---
+        // 4. Load URL
         webView.loadUrl("TARGET_URL_PLACEHOLDER")
     }
 
